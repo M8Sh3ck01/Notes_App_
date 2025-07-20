@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Notes</string>
+    <string name="empty_state_action">create new note</string>
+    <string name="empty_state_subtitle">click to create</string>
+    <string name="empty_state_title">create</string>
 </resources>
