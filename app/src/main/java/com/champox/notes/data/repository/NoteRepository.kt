@@ -8,7 +8,17 @@ import javax.inject.Inject
 class NoteRepository @Inject constructor(
     private val noteDao: NoteDao
 ) {
+    fun getUserNotes(userId: String): Flow<List<Note>> {
+        return noteDao.getNotesForUser(userId)
+    }
+
     fun getAllNotes(): Flow<List<Note>> = noteDao.getAllNotes()
+
+    fun getPinnedNotes(userId: String): Flow<List<Note>> = noteDao.getPinnedNotes(userId)
+
+    fun getArchivedNotes(userId: String): Flow<List<Note>> = noteDao.getArchivedNotes(userId)
+
+    fun getFavoriteNotes(userId: String): Flow<List<Note>> = noteDao.getFavoriteNotes(userId)
 
     suspend fun insertNote(note: Note): Long {
         return noteDao.insert(note)
@@ -26,4 +36,3 @@ class NoteRepository @Inject constructor(
         return noteDao.getNoteById(id)
     }
 }
-

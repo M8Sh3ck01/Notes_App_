@@ -12,9 +12,14 @@ data class Note(
     val content: String,
     val lastModified: Date = Date(),
     val isPinned: Boolean = false,
-    val color: Int = 0
+    val isArchived: Boolean = false,
+    val isFavorite: Boolean = false, // <-- add this new field
+    val color: Int = 0,
+    val userId: String // 👈 Store user's email here
+
 ) {
-    companion object {
-        fun empty() = Note(title = "", content = "")
-    }
+//    companion object {
+//        fun empty() = Note(title = "", content = "")
+//    }
 }
+

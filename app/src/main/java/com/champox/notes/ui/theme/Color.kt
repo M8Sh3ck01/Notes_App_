@@ -1,3 +1,6 @@
+//Color.kt file below
+
+
 package com.champox.notes.ui.theme
 
 import androidx.compose.ui.graphics.Color
@@ -35,3 +38,4 @@ val PrimaryText       = Color(0xFFFFFFFF)
 val SecondaryText     = Color(0xFF99A0C2)
 val AccentColor       = Color(0xFFEAEDFA)
 val IconBackground    = Color(0xFF282D43)
+

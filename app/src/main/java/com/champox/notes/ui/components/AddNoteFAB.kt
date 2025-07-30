@@ -9,9 +9,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.champox.notes.ui.theme.AccentColor
-import com.champox.notes.ui.theme.DarkBackground
 
 @Composable
 fun AddNoteFAB(
@@ -21,8 +20,8 @@ fun AddNoteFAB(
     FloatingActionButton(
         onClick = onClick,
         modifier = modifier.padding(16.dp),
-        containerColor = AccentColor,
-        contentColor = DarkBackground
+        containerColor = Color.White,    // use primary from theme
+        contentColor = Color.Black     // use onPrimary from theme
     ) {
         Icon(
             imageVector = Icons.Default.Add,

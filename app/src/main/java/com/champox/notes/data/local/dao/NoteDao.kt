@@ -11,8 +11,21 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes ORDER BY lastModified DESC")
+
+    @Query("SELECT * FROM notes")
     fun getAllNotes(): Flow<List<Note>>
+
+    @Query("SELECT * FROM notes WHERE userId = :userId ORDER BY lastModified DESC")
+    fun getNotesForUser(userId: String): Flow<List<Note>>
+
+    @Query("SELECT * FROM notes WHERE isPinned = 1 AND userId = :userId ORDER BY lastModified DESC")
+    fun getPinnedNotes(userId: String): Flow<List<Note>>
+
+    @Query("SELECT * FROM notes WHERE isArchived = 1 AND userId = :userId ORDER BY lastModified DESC")
+    fun getArchivedNotes(userId: String): Flow<List<Note>>
+
+    @Query("SELECT * FROM notes WHERE isFavorite = 1 AND userId = :userId ORDER BY lastModified DESC")
+    fun getFavoriteNotes(userId: String): Flow<List<Note>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(note: Note): Long

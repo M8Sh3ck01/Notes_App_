@@ -9,87 +9,217 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Date
 
+enum class NoteCategory {
+    ALL, PINNED, ARCHIVED, FAVORITES
+}
+
 class NotesViewModel(
     private val repository: NoteRepository
 ) : ViewModel() {
 
+    // States
+    private val _mainQuery = MutableStateFlow("")
+    private val _selectedNoteIds = MutableStateFlow<List<Long>>(emptyList())
+    private val _selectedCategory = MutableStateFlow(NoteCategory.ALL)
+    private val _selectedNote = MutableStateFlow<Note?>(null)
+
     private val _searchQuery = MutableStateFlow("")
+    private val _searchResults = MutableStateFlow<List<Note>>(emptyList())
+    private val _isSearchActive = MutableStateFlow(false)
 
-    private val _selectedNotes = MutableStateFlow<List<Note>>(emptyList())
-    val selectedNotes: StateFlow<List<Note>> = _selectedNotes
+    val selectedNoteIds: StateFlow<List<Long>> = _selectedNoteIds
+    val selectedCategory: StateFlow<NoteCategory> = _selectedCategory
+    val selectedNote: StateFlow<Note?> = _selectedNote
+    val searchResults: StateFlow<List<Note>> = _searchResults
+    val isSearchActive: StateFlow<Boolean> = _isSearchActive
 
-    val isSelectionMode: StateFlow<Boolean> = selectedNotes
+    val isSelectionMode: StateFlow<Boolean> = selectedNoteIds
         .map { it.isNotEmpty() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    private val allNotesFlow = flow {
+        val userEmail = com.champox.notes.data.local.session.UserSession.currentUserEmail
+        if (userEmail != null) {
+            emitAll(repository.getUserNotes(userEmail))
+        } else {
+            emit(emptyList())
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
 
     val filteredNotes = combine(
-        repository.getAllNotes(),
-        _searchQuery
-    ) { notes, query ->
-        if (query.isBlank()) notes
-        else notes.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                    it.content.contains(query, ignoreCase = true)
+        allNotesFlow, _mainQuery, _selectedCategory
+    ) { notes, query, category ->
+        val searched = if (query.isBlank()) notes else notes.filter {
+            it.title.contains(query, true) || it.content.contains(query, true)
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+        when (category) {
+            NoteCategory.ALL -> searched.filter { !it.isArchived }
+            NoteCategory.PINNED -> searched.filter { it.isPinned && !it.isArchived }
+            NoteCategory.ARCHIVED -> searched.filter { it.isArchived }
+            NoteCategory.FAVORITES -> searched.filter { it.isFavorite && !it.isArchived }
+        }
+    }
+        .debounce(200) // debounce to avoid rapid emissions after archive/unarchive
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // --- NEW: Selected Note state ---
-    private val _selectedNote = MutableStateFlow<Note?>(null)
-    val selectedNote: StateFlow<Note?> = _selectedNote
+
+    // Search
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+        viewModelScope.launch {
+            _searchResults.value = if (query.isBlank()) {
+                emptyList()
+            } else {
+                allNotesFlow.value.filter {
+                    it.title.contains(query, true) || it.content.contains(query, true)
+                }
+            }
+        }
+    }
+
+    fun openSearch() {
+        _isSearchActive.value = true
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+    }
+
+    fun closeSearch() {
+        _isSearchActive.value = false
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+    }
+
+    fun setMainQuery(query: String) {
+        _mainQuery.value = query
+    }
+
+    fun setCategory(category: NoteCategory) {
+        _selectedCategory.value = category
+    }
+
+    fun setNoteCategoryExclusive(note: Note, category: NoteCategory) {
+        viewModelScope.launch {
+            val updated = when (category) {
+                NoteCategory.PINNED -> {
+                    val newPinned = !note.isPinned
+                    note.copy(
+                        isPinned = newPinned,
+                        isArchived = false,
+                        isFavorite = false,
+                        lastModified = Date()
+                    )
+                }
+                NoteCategory.ARCHIVED -> {
+                    val newArchived = !note.isArchived
+                    note.copy(
+                        isArchived = newArchived,
+                        isPinned = false,
+                        isFavorite = false,
+                        lastModified = Date()
+                    )
+                }
+                NoteCategory.FAVORITES -> {
+                    val newFavorite = !note.isFavorite
+                    note.copy(
+                        isFavorite = newFavorite,
+                        isPinned = false,
+                        isArchived = false,
+                        lastModified = Date()
+                    )
+                }
+                NoteCategory.ALL -> {
+                    note.copy(
+                        isPinned = false,
+                        isArchived = false,
+                        isFavorite = false,
+                        lastModified = Date()
+                    )
+                }
+            }
+
+            repository.updateNote(updated)
+            if (_selectedNote.value?.id == note.id) {
+                _selectedNote.value = updated
+            }
+            if (updated.isArchived) {
+                _selectedNoteIds.value = _selectedNoteIds.value.filter { it != note.id }
+            }
+        }
+    }
 
     fun loadNoteById(id: Long) {
         viewModelScope.launch {
-            val note = repository.getNoteById(id)
-            _selectedNote.value = note
+            _selectedNote.value = repository.getNoteById(id)
         }
     }
 
     fun clearSelectedNote() {
         _selectedNote.value = null
     }
-    // --- End selectedNote ---
 
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
+    fun unarchiveSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                val updatedNote = note.copy(
+                    isArchived = false,
+                    lastModified = Date()
+                )
+                repository.updateNote(updatedNote)
+            }
+            clearSelectedNotes()
+        }
+    }
+
+    fun archiveSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                val updatedNote = note.copy(
+                    isArchived = true,
+                    isPinned = false,
+                    isFavorite = false,
+                    lastModified = Date()
+                )
+                repository.updateNote(updatedNote)
+            }
+            clearSelectedNotes()
+        }
     }
 
     fun toggleNoteSelection(note: Note) {
-        val current = _selectedNotes.value.toMutableList()
-        if (current.contains(note)) current.remove(note) else current.add(note)
-        _selectedNotes.value = current
+        val current = _selectedNoteIds.value.toMutableList()
+        if (current.contains(note.id)) current.remove(note.id) else current.add(note.id)
+        _selectedNoteIds.value = current
     }
 
     fun clearSelectedNotes() {
-        _selectedNotes.value = emptyList()
+        _selectedNoteIds.value = emptyList()
     }
 
     fun selectAllNotes(notes: List<Note>) {
-        _selectedNotes.value = notes
+        _selectedNoteIds.value = notes.map { it.id }
     }
 
     suspend fun addNote(note: Note): Long {
-        val fresh = note.copy(lastModified = Date())
-        return repository.insertNote(fresh)
+        return repository.insertNote(note.copy(lastModified = Date()))
     }
 
-    suspend fun getNoteById(id: Long): Note? {
-        return repository.getNoteById(id)
-    }
+    suspend fun getNoteById(id: Long): Note? = repository.getNoteById(id)
 
-    // Updated to suspend function for proper coroutine control
     suspend fun updateNote(note: Note) {
         val updated = note.copy(lastModified = Date())
         repository.updateNote(updated)

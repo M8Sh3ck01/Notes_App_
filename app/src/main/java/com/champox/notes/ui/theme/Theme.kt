@@ -1,3 +1,5 @@
+
+//Theme.kt file
 package com.champox.notes.ui.theme
 
 import androidx.compose.material3.MaterialTheme
@@ -45,3 +47,4 @@ fun NotesTheme(
         content     = content
     )
 }
+

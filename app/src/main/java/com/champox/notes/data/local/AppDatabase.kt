@@ -4,18 +4,21 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.champox.notes.data.local.dao.NoteDao
+import com.champox.notes.data.local.dao.UserDao
 import com.champox.notes.data.model.Note
+import com.champox.notes.data.model.User
 
 @Database(
-    entities = [Note::class],
-    version = 1,
+    entities = [Note::class, User::class], // ✅ Both entities here
+    version = 3, // ⚠️ Incremented version!
     exportSchema = false
 )
-
-@androidx.room.TypeConverters(Converters::class) // ✅ Add this line
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
+    abstract fun userDao(): UserDao // ✅ Add UserDao
 
     companion object {
         @Volatile
@@ -33,7 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "notes.db"
             )
-                .fallbackToDestructiveMigration(false) // Temporary for dev
+                .fallbackToDestructiveMigration() // ⚠️ Changed to true for development
                 .build()
     }
 }

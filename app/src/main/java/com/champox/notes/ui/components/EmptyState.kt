@@ -24,9 +24,11 @@ fun EmptyState(
         modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,  // Move content to top
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(40.dp)) // Add some space from top
+
         Text(
             text = "No notes yet.",
             style = MaterialTheme.typography.titleMedium,
