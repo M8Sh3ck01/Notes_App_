@@ -72,6 +72,30 @@ class NotesViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
+
+    // 1. Sharing state
+    private val _shareNoteEvent = MutableStateFlow<String?>(null)
+    val shareNoteEvent: StateFlow<String?> = _shareNoteEvent
+
+    // 2. Trigger sharing
+    fun requestNoteShare(note: Note) {
+        val content = buildString {
+            append("📝 ${note.title}\n\n")
+            append(note.content)
+        }
+        _shareNoteEvent.value = content
+    }
+
+    // 3. Clear after handled
+    fun onNoteShared() {
+        _shareNoteEvent.value = null
+    }
+
+
+
+
+
+
     // Search
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
@@ -205,6 +229,18 @@ class NotesViewModel(
         if (current.contains(note.id)) current.remove(note.id) else current.add(note.id)
         _selectedNoteIds.value = current
     }
+    fun toggleSelectAllVisibleNotes(notes: List<Note>) {
+        val currentSelected = _selectedNoteIds.value
+        if (currentSelected.size < notes.size) {
+            // Select all
+            _selectedNoteIds.value = notes.map { it.id }
+        } else {
+            // Deselect all
+            _selectedNoteIds.value = emptyList()
+        }
+    }
+
+
 
     fun clearSelectedNotes() {
         _selectedNoteIds.value = emptyList()
@@ -213,6 +249,14 @@ class NotesViewModel(
     fun selectAllNotes(notes: List<Note>) {
         _selectedNoteIds.value = notes.map { it.id }
     }
+    fun unselectNotes(notesToUnselect: List<Note>) {
+        val currentSelected = _selectedNoteIds.value.toMutableList()
+        val idsToUnselect = notesToUnselect.map { it.id }
+        currentSelected.removeAll(idsToUnselect)
+        _selectedNoteIds.value = currentSelected
+    }
+
+
 
     suspend fun addNote(note: Note): Long {
         return repository.insertNote(note.copy(lastModified = Date()))
@@ -231,6 +275,96 @@ class NotesViewModel(
             repository.deleteNote(note)
         }
     }
+
+    /////new
+    // Add these methods to your NotesViewModel class
+
+    fun pinSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                val updatedNote = note.copy(
+                    isPinned = true,
+                    isArchived = false,
+                    isFavorite = false,
+                    lastModified = Date()
+                )
+                repository.updateNote(updatedNote)
+            }
+            clearSelectedNotes()
+        }
+    }
+
+    fun unpinSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                val updatedNote = note.copy(
+                    isPinned = false,
+                    lastModified = Date()
+                )
+                repository.updateNote(updatedNote)
+            }
+            clearSelectedNotes()
+        }
+    }
+
+    fun starSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                val updatedNote = note.copy(
+                    isFavorite = true,
+                    isPinned = false,
+                    isArchived = false,
+                    lastModified = Date()
+                )
+                repository.updateNote(updatedNote)
+            }
+            clearSelectedNotes()
+        }
+    }
+
+    fun unstarSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                val updatedNote = note.copy(
+                    isFavorite = false,
+                    lastModified = Date()
+                )
+                repository.updateNote(updatedNote)
+            }
+            clearSelectedNotes()
+        }
+    }
+
+    fun deleteSelectedNotes() {
+        viewModelScope.launch {
+            val currentSelectedIds = _selectedNoteIds.value
+            val allNotes = allNotesFlow.value
+            val currentSelectedNotes = allNotes.filter { currentSelectedIds.contains(it.id) }
+            currentSelectedNotes.forEach { note ->
+                repository.deleteNote(note)
+            }
+            clearSelectedNotes()
+        }
+    }
+
+
+
+
+
+
+
 
     companion object {
         fun provideFactory(repository: NoteRepository): ViewModelProvider.Factory {

@@ -67,6 +67,11 @@ class AuthViewModel(
         _authState.value = AuthState.Idle
     }
 
+    fun resetAuthState() {
+        _authState.value = AuthState.Idle
+    }
+
+
     companion object {
         fun provideFactory(repository: AuthRepository): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
@@ -77,4 +82,4 @@ class AuthViewModel(
             }
         }
     }
-}
+}///////////

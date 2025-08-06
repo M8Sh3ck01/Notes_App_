@@ -1,9 +1,9 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -46,55 +46,62 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"
     }
+
 }
 
 dependencies {
+    // Firebase BoM to manage versions automatically
+    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+
+    // Firebase Analytics (managed by BoM)
+    implementation("com.google.firebase:firebase-analytics")
+
+    // Optional: Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // AndroidX Lifecycle ViewModel Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
+
+    // AndroidX DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
-
+    // Accompanist libraries for Compose
     implementation("com.google.accompanist:accompanist-pager:0.34.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.34.0")
 
+    // Compose Material and Material3
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.material3:material3:1.1.0")
+    implementation("androidx.compose.material3:material3:1.3.2")
 
-
-
+    // Room (database)
     val roomVersion = "2.7.2"
-
-    // Room core
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-
-    // Kotlin Symbol Processing (KSP)
     ksp("androidx.room:room-compiler:$roomVersion")
-
-    // Optional: For unit testing DAOs (only if writing Room tests)
     testImplementation("androidx.room:room-testing:$roomVersion")
 
-
-    // Core AndroidX
+    // Core AndroidX libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
-
-    // Jetpack Compose
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3:1.3.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.1")
 
-    // Dagger (✅ perfect)
+    // Dagger DI
     implementation("com.google.dagger:dagger:2.51.1")
-    // Desugaring
+
+    // Java 11 desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-    // Compose Tooling
+
+    // Compose UI Tooling (debug only)
     debugImplementation("androidx.compose.ui:ui-tooling")
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
+

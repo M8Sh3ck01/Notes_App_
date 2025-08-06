@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,10 +56,11 @@ fun HomeScreen(
     onAddNote: () -> Unit,
     onNoteClick: (Long) -> Unit,
     onSignOut: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isFilterActive: Boolean by remember { mutableStateOf(true) }
+
 
     val notes by viewModel.filteredNotes.collectAsState()
     val selectedNoteIds by viewModel.selectedNoteIds.collectAsState()
@@ -93,16 +95,19 @@ fun HomeScreen(
             ) {
                 NotesTopAppBar(
                     isFilterActive = isFilterActive,
-                    onViewModeClick = { isFilterActive = !isFilterActive },
                     isSelectionMode = isSelectionMode,
                     selectedCount = selectedNoteIds.size,
                     onCancelSelection = { viewModel.clearSelectedNotes() },
                     onMenuClick = { scope.launch { drawerState.open() } },
+                    onViewModeClick = { isFilterActive = !isFilterActive },
                     onSearchClick = {
                         if (!isSelectionMode) {
                             viewModel.openSearch()
                         }
-                    }
+                    },
+                    onSelect = {
+                            viewModel.toggleSelectAllVisibleNotes(notes)
+                    },
                 )
 
                 AnimatedVisibility(
@@ -124,6 +129,7 @@ fun HomeScreen(
                                 NoteCategory.ARCHIVED -> "Archived Notes"
                                 NoteCategory.FAVORITES -> "Favorite Notes"
                             },
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -209,30 +215,49 @@ fun HomeScreen(
                         .padding(bottom = 10.dp),
                     isArchived = selectedNoteIds.isNotEmpty() &&
                             notes.filter { selectedNoteIds.contains(it.id) }.all { it.isArchived },
-
+                    isPinned = selectedNoteIds.isNotEmpty() &&
+                            notes.filter { selectedNoteIds.contains(it.id) }.all { it.isPinned },
+                    isFavorite = selectedNoteIds.isNotEmpty() &&
+                            notes.filter { selectedNoteIds.contains(it.id) }.all { it.isFavorite },
+                    isLoading = false, // Set this based on your loading state
                     onArchive = {
                         if (selectedNoteIds.isNotEmpty()) {
-                            val selectedNotes = notes.filter { selectedNoteIds.contains(it.id) }
-                            if (selectedNotes.all { it.isArchived }) {
+                            val allArchived = notes.filter { selectedNoteIds.contains(it.id) }.all { it.isArchived }
+                            if (allArchived) {
                                 viewModel.unarchiveSelectedNotes()
                             } else {
                                 viewModel.archiveSelectedNotes()
                             }
                         }
                     },
-
                     onDelete = {
-                        showDeleteDialog = true
+                        if (selectedNoteIds.isNotEmpty()) {
+                            showDeleteDialog = true
+                        }
                     },
 
-                    onSelect = {
-                        if (selectedNoteIds.size < notes.size) {
-                            viewModel.selectAllNotes(notes)
-                        } else {
-                            viewModel.clearSelectedNotes()
+                    onPin = {
+                        if (selectedNoteIds.isNotEmpty()) {
+                            val allPinned = notes.filter { selectedNoteIds.contains(it.id) }.all { it.isPinned }
+                            if (allPinned) {
+                                viewModel.unpinSelectedNotes()
+                            } else {
+                                viewModel.pinSelectedNotes()
+                            }
+                        }
+                    },
+                    onStar = {
+                        if (selectedNoteIds.isNotEmpty()) {
+                            val allStarred = notes.filter { selectedNoteIds.contains(it.id) }.all { it.isFavorite }
+                            if (allStarred) {
+                                viewModel.unstarSelectedNotes()
+                            } else {
+                                viewModel.starSelectedNotes()
+                            }
                         }
                     }
                 )
+
             } else {
                 AddNoteFAB(
                     onClick = onAddNote,

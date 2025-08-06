@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,7 +38,9 @@ fun NotesTopAppBar(
     onCancelSelection: () -> Unit = {},
     onMenuClick: () -> Unit = {},
     onViewModeClick: () -> Unit, // FIXED: this should not return anything
-    onSearchClick: () -> Unit = {}
+    onSearchClick: () -> Unit = {},
+    onSelect: () -> Unit,
+
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -81,7 +85,16 @@ fun NotesTopAppBar(
             }
         },
         navigationIcon = {
-            if (!isSelectionMode) {
+            if (isSelectionMode) {
+                IconButton(onClick = onCancelSelection) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Cancel Selection",
+                        tint = colorScheme.onBackground
+                    )
+                }
+
+            }else{
                 IconButton(onClick = onMenuClick) {
                     Icon(
                         painter = painterResource(id = com.champox.notes.R.drawable.ic_sidebar_shape),
@@ -93,14 +106,15 @@ fun NotesTopAppBar(
             }
         },
         actions = {
-            if (isSelectionMode) {
-                Text(
-                    text = "Cancel",
-                    color = colorScheme.onBackground,
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .clickable { onCancelSelection() }
-                )
+            if(isSelectionMode) {
+                IconButton(onClick = onSelect) {
+                    Icon(
+                        imageVector = Icons.Default.CheckBox,
+                        contentDescription = "Select All",
+                        tint = colorScheme.onBackground
+                    )
+                }
+
             } else {
                 Row {
                     IconButton(onClick = {

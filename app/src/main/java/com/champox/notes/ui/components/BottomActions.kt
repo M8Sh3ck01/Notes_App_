@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,19 +33,35 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun BottomActions(
     modifier: Modifier = Modifier,
+    isPinned: Boolean,
     isArchived: Boolean,
-    isLoading: Boolean = false, // Add loading state
+    isFavorite: Boolean,
+    isLoading: Boolean = false,
+    onPin: () -> Unit,
     onArchive: () -> Unit,
+    onStar: () -> Unit,
     onDelete: () -> Unit,
-    onSelect: () -> Unit
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(top = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
+        ActionButton(
+            icon = Icons.Default.PushPin,
+            label = if (isPinned) "Unpin" else "Pin",
+            onClick = onPin,
+            enabled = !isLoading
+        )
+
+        ActionButton(
+            icon = if (isFavorite) Icons.Default.Star else Icons.Default.StarOutline,
+            label = if (isFavorite) "Unstar" else "Star",
+            onClick = onStar,
+            enabled = !isLoading
+        )
 
         ActionButton(
             icon = Icons.Default.Archive,
@@ -56,12 +74,6 @@ fun BottomActions(
             icon = Icons.Default.Delete,
             label = "Delete",
             onClick = onDelete,
-            enabled = !isLoading
-        )
-        ActionButton(
-            icon = Icons.Default.Check,
-            label = "Select",
-            onClick = onSelect,
             enabled = !isLoading
         )
     }

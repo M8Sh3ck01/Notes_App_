@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.champox.notes" />
+                  <option name="mobileSdkAppId" value="1:455998827620:android:225e663747bb5e5fc88371" />
+                  <option name="projectId" value="notes-app-e3a17" />
+                  <option name="projectNumber" value="455998827620" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

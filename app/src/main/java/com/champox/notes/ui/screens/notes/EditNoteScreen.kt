@@ -1,6 +1,7 @@
 package com.champox.notes.ui.screens.notes
 
 import DeleteConfirmationDialog
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +30,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +40,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.champox.notes.data.model.Note
 import com.champox.notes.ui.components.MoreOptionsMenuButton
@@ -56,7 +59,6 @@ fun EditNoteScreen(
     note: Note,
     onSaveAndBack: (String, String) -> Unit,
     onDelete: () -> Unit,
-    onShare: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -67,6 +69,20 @@ fun EditNoteScreen(
 
     val listState = rememberLazyListState()
     val colors = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val shareContent by notesViewModel.shareNoteEvent.collectAsState()
+
+    // 🔁 Observe share event
+    LaunchedEffect(shareContent) {
+        shareContent?.let { text ->
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "Share Note"))
+            notesViewModel.onNoteShared()
+        }
+    }
 
     // ✅ Auto-save after typing delay
     LaunchedEffect(title, content) {
@@ -87,17 +103,14 @@ fun EditNoteScreen(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = {
-                        // Call the passed callback with current title and content,
-                        // so MainActivity handles saving and navigation
                         onSaveAndBack(title, content)
                     }) {
                         Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back")
                     }
-
                 },
                 actions = {
                     IconButton(onClick = {
-                        // Optional: share logic
+                        notesViewModel.requestNoteShare(note.copy(title = title, content = content))
                     }) {
                         Icon(Icons.Default.Share, contentDescription = "Share")
                     }

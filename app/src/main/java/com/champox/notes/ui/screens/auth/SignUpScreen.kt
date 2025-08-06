@@ -1,6 +1,7 @@
 package com.champox.notes.ui.screens.auth
 
 import android.util.Patterns
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -111,6 +112,7 @@ fun SignUpScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)  // <-- add this
             .padding(32.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
