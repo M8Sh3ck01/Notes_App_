@@ -49,8 +49,9 @@ fun NotesTopAppBar(
         title = {
             if (isSelectionMode) {
                 Text(
-                    text = "$selectedCount selected",
-                    color = colorScheme.onBackground
+                    text = "$selectedCount Selected",
+                    color = colorScheme.onBackground,
+
                 )
             } else {
                 Surface(
@@ -90,7 +91,9 @@ fun NotesTopAppBar(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Cancel Selection",
-                        tint = colorScheme.onBackground
+                        tint = colorScheme.onBackground,
+                        modifier = Modifier.size(28.dp)
+
                     )
                 }
 
@@ -111,7 +114,9 @@ fun NotesTopAppBar(
                     Icon(
                         imageVector = Icons.Default.CheckBox,
                         contentDescription = "Select All",
-                        tint = colorScheme.onBackground
+                        tint = colorScheme.onBackground,
+                        modifier = Modifier.size(28.dp)
+
                     )
                 }
 

@@ -15,7 +15,13 @@ interface NoteDao {
     @Query("SELECT * FROM notes")
     fun getAllNotes(): Flow<List<Note>>
 
-    @Query("SELECT * FROM notes WHERE userId = :userId ORDER BY lastModified DESC")
+    @Query("""
+    SELECT * FROM notes 
+    WHERE userId = :userId 
+    ORDER BY 
+        CASE WHEN isPinned = 1 THEN 0 ELSE 1 END,  -- Pinned notes first (0 comes before 1)
+        lastModified DESC                          -- Then by most recent
+""")
     fun getNotesForUser(userId: String): Flow<List<Note>>
 
     @Query("SELECT * FROM notes WHERE isPinned = 1 AND userId = :userId ORDER BY lastModified DESC")

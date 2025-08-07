@@ -44,6 +44,7 @@ import com.champox.notes.ui.components.NoteCategorySelector
 import com.champox.notes.ui.components.NoteItem
 import com.champox.notes.ui.components.NotesAppDrawer
 import com.champox.notes.ui.components.NotesTopAppBar
+import com.champox.notes.ui.preferences.FilterPreferences
 import com.champox.notes.ui.screens.search.SearchScreen
 import com.champox.notes.viewmodels.NoteCategory
 import com.champox.notes.viewmodels.NotesViewModel
@@ -52,15 +53,18 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    filterPreferences: FilterPreferences, // Add this parameter
     viewModel: NotesViewModel,
     onAddNote: () -> Unit,
     onNoteClick: (Long) -> Unit,
     onSignOut: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var isFilterActive: Boolean by remember { mutableStateOf(true) }
 
+    val isFilterActive by filterPreferences.filterVisibleFlow.collectAsState(initial = true)
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val notes by viewModel.filteredNotes.collectAsState()
     val selectedNoteIds by viewModel.selectedNoteIds.collectAsState()
@@ -99,7 +103,9 @@ fun HomeScreen(
                     selectedCount = selectedNoteIds.size,
                     onCancelSelection = { viewModel.clearSelectedNotes() },
                     onMenuClick = { scope.launch { drawerState.open() } },
-                    onViewModeClick = { isFilterActive = !isFilterActive },
+                    onViewModeClick = {  coroutineScope.launch {
+                        filterPreferences.setFilterVisible(!isFilterActive)
+                    } },
                     onSearchClick = {
                         if (!isSelectionMode) {
                             viewModel.openSearch()

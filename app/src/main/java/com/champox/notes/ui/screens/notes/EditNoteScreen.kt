@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.champox.notes.data.model.Note
 import com.champox.notes.ui.components.MoreOptionsMenuButton
-import com.champox.notes.ui.components.toFormattedString
+import com.champox.notes.ui.components.toRelativeTimeString
 import com.champox.notes.viewmodels.NoteCategory
 import com.champox.notes.viewmodels.NotesViewModel
 import kotlinx.coroutines.FlowPreview
@@ -188,7 +188,7 @@ fun EditNoteScreen(
 
                 Text(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    text = "last modified: ${note.lastModified.toFormattedString()}",
+                    text = "last modified: ${note.lastModified.toRelativeTimeString()}",
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant.copy(alpha = 0.6f)
                 )

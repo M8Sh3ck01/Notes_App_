@@ -1,17 +1,17 @@
-// viewmodels/AuthViewModel.kt
 package com.champox.notes.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.champox.notes.data.local.session.UserSession
+import com.champox.notes.data.local.session.SessionManager
 import com.champox.notes.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     sealed class AuthState {
@@ -24,7 +24,7 @@ class AuthViewModel(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
-    private val _isAuthenticated = MutableStateFlow(false)
+    private val _isAuthenticated = MutableStateFlow(sessionManager.isLoggedIn())
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
     fun register(email: String, password: String) {
@@ -32,8 +32,7 @@ class AuthViewModel(
             _authState.value = AuthState.Loading
             try {
                 if (repository.register(email, password)) {
-                    UserSession.currentUserEmail = email // ✅ Store the email
-
+                    sessionManager.saveUserSession(email) // This will update both systems
                     _isAuthenticated.value = true
                     _authState.value = AuthState.Success
                 } else {
@@ -50,7 +49,7 @@ class AuthViewModel(
             _authState.value = AuthState.Loading
             try {
                 if (repository.login(email, password)) {
-                    UserSession.currentUserEmail = email // ✅ Store the email
+                    sessionManager.saveUserSession(email) // This will update both systems
                     _isAuthenticated.value = true
                     _authState.value = AuthState.Success
                 } else {
@@ -63,23 +62,28 @@ class AuthViewModel(
     }
 
     fun logout() {
-        _isAuthenticated.value = false
-        _authState.value = AuthState.Idle
+        viewModelScope.launch {
+            sessionManager.clearSession() // This will clear both systems
+            _isAuthenticated.value = false
+            _authState.value = AuthState.Idle
+        }
     }
 
     fun resetAuthState() {
         _authState.value = AuthState.Idle
     }
 
-
     companion object {
-        fun provideFactory(repository: AuthRepository): ViewModelProvider.Factory {
+        fun provideFactory(
+            repository: AuthRepository,
+            sessionManager: SessionManager
+        ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return AuthViewModel(repository) as T
+                    return AuthViewModel(repository, sessionManager) as T
                 }
             }
         }
     }
-}///////////
+}

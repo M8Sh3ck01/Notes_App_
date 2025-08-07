@@ -28,7 +28,7 @@ interface UserDao {
     @Query("SELECT COUNT(*) FROM users")
     suspend fun getUserCount(): Int
 
-    // Optional: Fetch all users, useful for admin or debugging
+    // Optional: Fetch all users, us`eful for admin or debugging
     @Query("SELECT * FROM users ORDER BY createdAt DESC")
     suspend fun getAllUsers(): List<User>
 }
