@@ -25,7 +25,6 @@ class AuthViewModel(
     val authState: StateFlow<AuthState> = _authState
 
     private val _isAuthenticated = MutableStateFlow(sessionManager.isLoggedIn())
-    val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
     fun register(email: String, password: String) {
         viewModelScope.launch {

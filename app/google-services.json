@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "455998827620",
+    "project_id": "notes-app-e3a17",
+    "storage_bucket": "notes-app-e3a17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455998827620:android:225e663747bb5e5fc88371",
+        "android_client_info": {
+          "package_name": "com.champox.notes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4h_L9TkQRNZ53wvF_SZJaC26xMxAqchU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

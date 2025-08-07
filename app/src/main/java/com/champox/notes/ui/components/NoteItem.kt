@@ -38,7 +38,6 @@ fun NoteItem(
     isSelected: Boolean = false,
     isSelectionMode: Boolean = false,
     onClick: () -> Unit,
-    showArchiveLabel: Boolean = false,
     onLongClick: () -> Unit,
     shape: Shape = MaterialTheme.shapes.medium
 ) {
