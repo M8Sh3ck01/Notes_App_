@@ -1,6 +1,3 @@
-
-
-
 package com.champox.notes
 
 import android.os.Bundle
